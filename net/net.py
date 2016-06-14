@@ -1,6 +1,6 @@
 #coding: utf-8
 #リカレントネット
-import chaienr
+import chainer
 import chainer.functions as F
 import chainer.links as L
 
