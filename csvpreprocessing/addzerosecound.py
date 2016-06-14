@@ -1,4 +1,5 @@
 #coding: utf-8
+#日付の秒をゼロで埋める
 import csv
 with open('Y2013-all.csv','r') as f:
     data = csv.reader(f, delimiter=',')
