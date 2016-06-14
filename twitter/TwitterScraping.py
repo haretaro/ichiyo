@@ -14,7 +14,7 @@ def sformat(date):
     return str(date.day) + " " + calendar.month_abbr[date.month] + " " + str(date.year)
 
 def writeData(data, tdata, word, date_source):
-    #try:
+    try:
         date = datetime.datetime.strptime(date_source,"%Y-%m-%d")
         f = open("output_"+ word + "_" + date_source +".txt","w")
         for (e1, e2) in zip(data, tdata):
@@ -24,15 +24,16 @@ def writeData(data, tdata, word, date_source):
         
         f.close()
     
-    #except:
-        #print("save error!")
+    except:
+        print("save error!")
 
 def Ichiyo(word, since, until , interval):
     since = datetime.datetime.strptime(since,"%Y-%m-%d")
     until = datetime.datetime.strptime(until,"%Y-%m-%d")
-    date_source = since
-    while ((date_source - until) == datetime.timedelta(days=0)):
-        date_source = dformat(date_source - datetime.timedelta(days=1))
+    date = since
+    while ((date - until) != datetime.timedelta(days=0)):
+        date = date + datetime.timedelta(days=1)
+        date_source = dformat(date)
         TWscraping(word, date_source, interval)
 
 
@@ -45,6 +46,7 @@ def TWscraping(word, date_source, interval):
     
     count = 0;
     counttemp = 1;
+    print("Getting... word: " + word +" date:" + date_source)
     
     try:
         while(count < counttemp):
@@ -60,9 +62,10 @@ def TWscraping(word, date_source, interval):
     
     except:
         print("Error!!")
-
+    browser.quit()
     writeData(result, result1, word, date_source)
-    
+    print("Finish word: " + word +" date:" + date_source)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Search and Scraping Twitter Data!")
     parser.add_argument("word", help=u"Search key word")
@@ -73,5 +76,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     #TWscraping(args.word, args.date, args.interval)
-    Ichiyo(args.word, )
+    Ichiyo(args.word, args.since, args.until, args.interval)
 
