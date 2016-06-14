@@ -1,3 +1,4 @@
+
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
@@ -33,6 +34,8 @@ def Ichiyo(word, since, until , interval):
     while ((date_source - until) == datetime.timedelta(days=0)):
         date_source = dformat(date_source - datetime.timedelta(days=1))
         TWscraping(word, date_source, interval)
+
+
 
 def TWscraping(word, date_source, interval):
     date = datetime.datetime.strptime(date_source,"%Y-%m-%d")
