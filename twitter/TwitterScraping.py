@@ -32,9 +32,10 @@ def Ichiyo(word, since, until , interval):
     until = datetime.datetime.strptime(until,"%Y-%m-%d")
     date = since
     while ((date - until) != datetime.timedelta(days=0)):
-        date = date + datetime.timedelta(days=1)
         date_source = dformat(date)
         TWscraping(word, date_source, interval)
+        date = date + datetime.timedelta(days=1)
+
 
 
 
