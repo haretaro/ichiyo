@@ -7,7 +7,8 @@ import calendar
 import argparse
 import datetime
 
-python_ver = 2
+python_ver = "2"
+browser_env = "firefox"
 
 def dformat(date):
     return str(date.year) + "-" + str(date.month) + "-" + str(date.day)
@@ -65,7 +66,11 @@ def TWscraping(word, date_source, interval):
         url = urllib.parse.quote(str(word) + " since:" + dformat(date - datetime.timedelta(days=1)) + " until:" + dformat(date + datetime.timedelta(days=1)))
     else:
         url = urllib.quote(str(word) + " since:" + dformat(date - datetime.timedelta(days=1)) + " until:" + dformat(date + datetime.timedelta(days=1)))
-    browser = webdriver.Firefox()
+    
+    if browser_env == "chrome" or browser_env == "Chrome":
+        browser = webdriver.Chrome("./chromedriver")
+    else:
+        browser = webdriver.Firefox()
     browser.get("https://twitter.com/search?q=" + url)
     
     count = 0;
@@ -96,9 +101,11 @@ if __name__ == "__main__":
     parser.add_argument("-d", dest="date",help="example: 2015-8-12")
     parser.add_argument("-i", dest="interval", default=2, help=u"Update interval: Short if it fails do not cry.")
     parser.add_argument("-p", dest="pyversion", default=2, help="python version default 2")
+    parser.add_argument("-b", dest="browser",default="firefox",help="browser")
     args = parser.parse_args()
     
     python_ver = args.pyversion
+    browser_env = args.browser
     
     #TWscraping(args.word, args.date, args.interval)
     Ichiyo(args.word, args.since, args.until, args.interval)
