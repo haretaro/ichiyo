@@ -15,7 +15,7 @@ class Net(chainer.Chain):
                 )
 
     def __call__(self, x, t):
-        return F.mean_square_error(self.predict(x), t)
+        return F.mean_squared_error(self.predict(x), t)
 
     def reset_state(self):
         self.l2.reset_state()
