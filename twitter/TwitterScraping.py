@@ -101,13 +101,13 @@ if __name__ == "__main__":
     parser.add_argument("-d", dest="date",help="example: 2015-8-12")
     parser.add_argument("-i", dest="interval", default=2, help=u"Update interval: Short if it fails do not cry.")
     parser.add_argument("-p", dest="pyversion", default=2, help="python version default 2")
-    parser.add_argument("-b", dest="browser",default="firefox",help="browser")
+    parser.add_argument("-b", dest="browser",default="firefox",help="if use Chrome [-b Chrome] or [-b chrome]")
     args = parser.parse_args()
     
     python_ver = args.pyversion
     browser_env = args.browser
     
     #TWscraping(args.word, args.date, args.interval)
-    Ichiyo(args.word, args.since, args.until, args.interval)
+    Ichiyo(args.word, args.since, args.until, int(args.interval))
     
 
