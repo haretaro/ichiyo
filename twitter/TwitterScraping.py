@@ -28,6 +28,7 @@ def writeData(data, tdata, word, date_source):
         f = open("output_"+ word + "_" + date_source +".txt","w")
         r = extractData(data, tdata, date_source)
         for e in r:
+            print(e + "\n")
             f.write(e + "\n")
         f.close()
         print("Finish word: " + word +" date:" + date_source)
@@ -47,7 +48,7 @@ def Ichiyo(word, since, until , interval):
 
 def TWscraping(word, date_source, interval):
     date = datetime.datetime.strptime(date_source,"%Y-%m-%d")
-    url = urllib.quote(str(word) + " since:" + dformat(date - datetime.timedelta(days=1)) + " until:" + dformat(date + datetime.timedelta(days=2)))
+    url = urllib.quote(str(word) + " since:" + dformat(date - datetime.timedelta(days=1)) + " until:" + dformat(date + datetime.timedelta(days=1)))
     browser = webdriver.Firefox()
     browser.get("https://twitter.com/search?q=" + url)
     
