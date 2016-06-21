@@ -61,7 +61,7 @@ def Ichiyo(word, since, until , interval):
 
 def TWscraping(word, date_source, interval):
     date = datetime.datetime.strptime(date_source,"%Y-%m-%d")
-    if python_ver == 3:
+    if python_ver == "3":
         url = urllib.parse.quote(str(word) + " since:" + dformat(date - datetime.timedelta(days=1)) + " until:" + dformat(date + datetime.timedelta(days=1)))
     else:
         url = urllib.quote(str(word) + " since:" + dformat(date - datetime.timedelta(days=1)) + " until:" + dformat(date + datetime.timedelta(days=1)))
