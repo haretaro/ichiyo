@@ -28,8 +28,7 @@ def extractData(data, tdata, date_source):
     for (e1, e2) in zip(data, tdata):
         tmp = e2.find_all("span")
         t = tmp[0]
-        t2 = t['data-time']
-        tmp2 = datetime.datetime.fromtimestamp(int(t2))
+        tmp2 = datetime.datetime.fromtimestamp(int(t['data-time']))
         
         if tmp2 > date and until > tmp2:
         #if sformat(date) == e2.text:
@@ -96,12 +95,12 @@ def TWscraping(word, date_source, interval):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Search and Scraping Twitter Data!")
     parser.add_argument("word", help=u"Search key word")
-    parser.add_argument("since", help=u"")
-    parser.add_argument("until", help=u"")
+    parser.add_argument("since", help=u"get twitter data since this date. example: 2016-04-03")
+    parser.add_argument("until", help=u"get twitter data until this date. example: 2016-04-04")
     parser.add_argument("-d", dest="date",help="example: 2015-8-12")
     parser.add_argument("-i", dest="interval", default=2, help=u"Update interval: Short if it fails do not cry.")
     parser.add_argument("-p", dest="pyversion", default=2, help="python version default 2")
-    parser.add_argument("-b", dest="browser",default="firefox",help="if use Chrome [-b Chrome] or [-b chrome]")
+    parser.add_argument("-b", dest="browser",default="firefox",help="if you will use Chrome [-b Chrome] or [-b chrome]")
     args = parser.parse_args()
     
     python_ver = args.pyversion
