@@ -32,8 +32,7 @@ def extractData(data, tdata, date_source):
         tmp2 = datetime.datetime.fromtimestamp(int(t['data-time']))
         
         if tmp2 > date and until > tmp2:
-        #if sformat(date) == e2.text:
-            r.append(date_source + " :" + e1.text.replace("\n", " ").encode('utf-8'))
+            r.append("1")
     return r
 
 def writeData(data, tdata, word, date_source):
