@@ -6,10 +6,12 @@ import urllib
 import calendar
 import argparse
 import datetime
+import random
 
 python_ver = "2"
 browser_env = "firefox"
-
+random_interval = True
+break_Count = 10
 
 def dformat(date):
     return str(date.year) + "-" + str(date.month) + "-" + str(date.day)
@@ -62,6 +64,7 @@ def Ichiyo(word, since, until , interval):
 
 
 def TWscraping(word, date_source, interval):
+    check = 0
     date = datetime.datetime.strptime(date_source,"%Y-%m-%d")
     if python_ver == "3":
         url = urllib.parse.quote(str(word) + " since:" + dformat(date - datetime.timedelta(days=1)) + " until:" + dformat(date + datetime.timedelta(days=1)))
@@ -79,9 +82,14 @@ def TWscraping(word, date_source, interval):
     print("Getting... word: " + word +" date:" + date_source)
     
     try:
-        while(count < counttemp):
+        while(check < break_Count):
+            if(count == counttemp):
+                check = check + 1
+                print("check:" + str(check) + "/" + str(break_Count))
             count = counttemp
             browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            if(random_interval):
+                interval = random.uniform(1,5)
             time.sleep(interval)
             html = browser.page_source.encode('utf-8')
             counttemp = len(html)
@@ -100,13 +108,16 @@ if __name__ == "__main__":
     parser.add_argument("since", help=u"get twitter data since this date. example: 2016-04-03")
     parser.add_argument("until", help=u"get twitter data until this date. example: 2016-04-04")
     parser.add_argument("-d", dest="date",help="example: 2015-8-12")
-    parser.add_argument("-i", dest="interval", default=2, help=u"Update interval: Short if it fails do not cry.")
+    parser.add_argument("-i", dest="interval", default=1000, help=u"Update interval: Short if it fails do not cry.")
     parser.add_argument("-p", dest="pyversion", default=2, help="python version default 2")
     parser.add_argument("-b", dest="browser",default="firefox",help="if you will use Chrome [-b Chrome] or [-b chrome]")
     args = parser.parse_args()
     
     python_ver = args.pyversion
     browser_env = args.browser
+    
+    if(args.interval != 1000):
+        random_interval = False    
     
     #TWscraping(args.word, args.date, args.interval)
     Ichiyo(args.word, args.since, args.until, int(args.interval))
