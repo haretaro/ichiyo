@@ -86,7 +86,6 @@ def evaluate(model, x):
     return output
 
 output = evaluate(model, train_data_x)
-plt.plot(output)
-plt.show()
-plt.plot(train_data_y)
+plt.plot(output[:200])
+plt.plot(train_data_y[:200])
 plt.show()
