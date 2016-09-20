@@ -40,7 +40,6 @@ def evaluate(model, x):
     return chainer.cuda.to_cpu(out.data)
 
 output = evaluate(model, in_data)
-output = in_data[1:]
 
 def buy(money, stock, current_price, buy_rate = buy_rate, deposit = deposit, commission = commission):
     number_of_stock = min(money * buy_rate // current_price, money // deposit) - stock
@@ -71,6 +70,8 @@ for current_price, prediction in zip(in_data[:-1], output):
         money, stock = sell(money, stock, current_price)
     history.append((stock, money))
 
-#plt.plot(in_data)
+plt.plot(in_data)
+plt.plot(output)
+plt.show()
 plt.plot([x[1] for x in history])
 plt.show()
