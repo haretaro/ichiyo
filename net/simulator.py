@@ -27,22 +27,23 @@ in_data = []
 f = open('nikkei5min.csv','r')
 data = csv.reader(f, delimiter=',')
 for row in data:
-    in_data.append(row[2])
-in_data = np.asarray(in_data, dtype=np.float32)
+    in_data.append([row[i] for i in range(2,6)])
+in_data = xp.asarray(in_data, dtype=np.float32)
 
 #モデルを読み込む
-model = Net(1,20)
-serializers.load_npz('price_prediction.model', model)
+model = Net(4,20,4)
+serializers.load_npz('3M_epoch.model', model)
 
 #ネットワークを試す関数
 def evaluate(model, x):
     evaluator = model.copy()
     evaluator.reset_state()
-    out = evaluator.predict(chainer.Variable(xp.asarray([[x_] for x_ in x])))
+    out = evaluator.predict(x)
     return chainer.cuda.to_cpu(out.data)
 
-output = evaluate(model, in_data / 20000)
-output = output * 20000 + 60
+output = evaluate(model, in_data / 20000)[:,0]
+in_data = in_data[:,0]
+output = output * 20000
 #output = in_data[1:]
 #in_data = in_data[:-1]
 
@@ -103,11 +104,12 @@ if stock != 0:
     history.append((stock, money))
     print('finaly, \tstock {0},\tmoney {1}, profit {2:,d} yen'.format(stock,  money, int(money - init_money)))
 
-plt.plot(in_data[:100], label='in')
-plt.plot(output[:100], label='prediction')
+fig, ax1 = plt.subplots()
+ax1.plot(in_data[:], label='in')
+ax1.plot(output[:], label='prediction')
 plt.legend()
-plt.show()
-plt.plot([x[1] for x in history])
-plt.title("お金の推移")
+ax2 = ax1.twinx()
+ax2.plot([x[1] for x in history], label='money')
+plt.title("money")
 plt.grid()
 plt.show()
