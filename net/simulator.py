@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from net import Net
 
 use_gpu = False
-trade_price = 3 #次のタイムスパンでx円上がるなら買い, x円下がるなら売り
+trade_price = 4 #次のタイムスパンでx円上がるなら買い, x円下がるなら売り
 loss_cut = 400 #損切り
 profit_taking = 1 #利食い #TODO: 手数料から計算する
 deposit = 9e5 #証拠金
@@ -19,6 +19,7 @@ init_money = 2e7 #所持金
 stock = 0 #所持枚数
 last_transit = 0
 money = init_money #所持金
+offset = 400 #予測が安定するまで取引を行わない
 
 xp = cuda.cupy if use_gpu is True else np
 
@@ -41,8 +42,8 @@ def evaluate(model, x):
     out = evaluator.predict(x)
     return chainer.cuda.to_cpu(out.data)
 
-output = evaluate(model, in_data / 20000)[:,0]
-in_data = in_data[:,0]
+output = evaluate(model, in_data / 20000)
+in_data = in_data
 output = output * 20000
 #output = in_data[1:]
 #in_data = in_data[:-1]
@@ -73,27 +74,27 @@ def sell(money, stock, current_price, last_transit, buy_rate = buy_rate, deposit
 
 #シミュレーション
 history = []
-for current_price, prediction in zip(in_data[:-1], output):
+for current_price, prediction in zip(in_data[offset:,3], output[offset:]):
 
-    #損切り
-    if stock > 0 and current_price - last_transit < -loss_cut:
-        money += stock * current_price
-        stock = 0
-        print('loss cut current{}, last{}, delta{}'.format(current_price, last_transit, current_price - last_transit))
+    ##損切り
+    #if stock > 0 and current_price - last_transit < -loss_cut:
+    #    money += stock * current_price
+    #    stock = 0
+    #    print('loss cut current{}, last{}, delta{}'.format(current_price, last_transit, current_price - last_transit))
 
-    #損切り
-    if stock < 0 and current_price - last_transit > loss_cut:
-        money += stock * current_price
-        stock = 0
-        print('loss cut current{}, last{}'.format(current_price, last_transit))
+    ##損切り
+    #if stock < 0 and current_price - last_transit > loss_cut:
+    #    money += stock * current_price
+    #    stock = 0
+    #    print('loss cut current{}, last{}'.format(current_price, last_transit))
 
-    diff = prediction - current_price
+    diff = prediction[3] - prediction[0]
     if diff > trade_price:
-        if stock == 0 or current_price - last_transit > profit_taking:
+        #if stock == 0 or current_price - last_transit > profit_taking:
             money, stock, last_transit = buy(money, stock, current_price, last_transit)
 
     elif diff < trade_price:
-        if stock == 0 or last_transit - current_price > profit_taking:
+        #if stock == 0 or last_transit - current_price > profit_taking:
             money, stock, last_transit = sell(money, stock, current_price, last_transit)
     history.append((stock, money))
 
@@ -105,11 +106,15 @@ if stock != 0:
     print('finaly, \tstock {0},\tmoney {1}, profit {2:,d} yen'.format(stock,  money, int(money - init_money)))
 
 fig, ax1 = plt.subplots()
-ax1.plot(in_data[:], label='in')
-ax1.plot(output[:], label='prediction')
+ax1.plot(in_data[:,0], label='in')
+ax1.plot(output[:,0], label='prediction')
 plt.legend()
 ax2 = ax1.twinx()
 ax2.plot([x[1] for x in history], label='money')
 plt.title("money")
 plt.grid()
+plt.show()
+
+plt.plot(output[:,0], label='start')
+plt.plot(output[:,3], label='end')
 plt.show()
