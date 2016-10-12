@@ -11,12 +11,11 @@ sys.path.append('../net')
 from net import Net
 
 use_gpu = False
-trade_price = 4 #次のタイムスパンでx円上がるなら買い, x円下がるなら売り
 
-buy_value = 0.4
-sell_value = 0.6
+buy_value = 0.1
+sell_value = 0.9
 
-loss_cut = 400 #損切り
+loss_cut = 200 #損切り
 profit_taking = 100 #利食い
 deposit = 9e5 #証拠金
 commission = 250 #手数料
@@ -26,6 +25,7 @@ stock = 0 #所持枚数
 last_transit = 0
 money = init_money #所持金
 offset = 400 #予測が安定するまで取引を行わない
+position = 'neutral' #sell, buy, neutral のどれかの状態を取る
 
 end = 5 #終値の列
 deviation = 7 #移動平均乖離率
@@ -72,7 +72,7 @@ def buy(money, stock, current_price, last_transit, buy_rate = buy_rate, deposit 
     if number_of_stock != 0:
         money -= commission
         last_transit = current_price
-        print('buy {},\tprice {},\tstock {},\tmoney {}'.format(number_of_stock, current_price, stock,  money))
+        print('buy {},\tprice {},\tstock {},\tmoney {}, {}'.format(number_of_stock, current_price, stock,  money, position))
     return money, stock, last_transit
 
 def sell(money, stock, current_price, last_transit, buy_rate = buy_rate, deposit = deposit, commission = commission):
@@ -84,18 +84,33 @@ def sell(money, stock, current_price, last_transit, buy_rate = buy_rate, deposit
     if number_of_stock != 0:
         money -= commission
         last_transit = current_price
-        print('sell {},\tprice {},\tstock {},\tmoney {}, {}'.format(number_of_stock, current_price, stock,  money, last_transit))
+        print('sell {},\tprice {},\tstock {},\tmoney {}, {}'.format(number_of_stock, current_price, stock,  money, position))
     return money, stock, last_transit
 
 #シミュレーション
 history = []
 for current_price, ceiling_degree in zip(end_prices, output[offset:,0]):
+    if position == 'neutral':
+        if ceiling_degree < buy_value:
+            money, stock, last_transit = buy(money, stock, current_price, last_transit)
+            position = 'buy'
 
-    if ceiling_degree < buy_value:
-        money, stock, last_transit = buy(money, stock, current_price, last_transit)
+        elif ceiling_degree > sell_value:
+            money, stock, last_transit = sell(money, stock, current_price, last_transit)
+            position = 'sell'
 
-    elif ceiling_degree > sell_value:
-        money, stock, last_transit = sell(money, stock, current_price, last_transit)
+    elif position == 'buy':
+        if current_price > last_transit + profit_taking or current_price < last_transit - loss_cut:
+            money, stock, last_transit = sell(money, stock, current_price, last_transit)
+            position = 'neutral'
+
+    elif position == 'sell':
+        if current_price < last_transit - profit_taking or current_price > last_transit + loss_cut:
+            money, stock, last_transit = buy(money, stock, current_price, last_transit)
+            position = 'neutral'
+
+    else:
+        raise('positionに変な値入ってるエラー')
     history.append((stock, money))
 
 #精算
@@ -106,7 +121,7 @@ if stock != 0:
     print('finaly, \tstock {0},\tmoney {1}, profit {2:,d} yen'.format(stock,  money, int(money - init_money)))
 
 fig, ax1 = plt.subplots()
-ax1.plot(end_prices[:], label='end_price')
+ax1.plot(end_prices[offset:], label='end_price')
 plt.legend()
 ax2 = ax1.twinx()
 #ax2.plot(output[:,0], label='predicted_ceiling_degree', color='green')
