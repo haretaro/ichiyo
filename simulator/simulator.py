@@ -36,7 +36,7 @@ xp = np
 #データ読み込み
 in_data = []
 data = []
-f = open('nikkei5min.csv','r')
+f = open('../data/nikkei5min.csv','r')
 csvfile = csv.reader(f, delimiter=',')
 for row in csvfile:
     if row[deviation] == '':
