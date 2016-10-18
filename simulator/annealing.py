@@ -27,7 +27,7 @@ def probability(next_score, score, tempreture):
 history = []
 score = simulateP(state)
 for i in range(iteration):
-    if i% 10 == 0:
+    if i% 100 == 0:
         print('iteration {} / {}, T={}'.format(i, iteration, tempreture))
     current_score = simulate(state[0], state[1], state[2], state[3], False, False)
     next_state = [state[0] + random()/10 - 0.05,

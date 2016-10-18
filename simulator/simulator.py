@@ -12,6 +12,8 @@ from net import Net
 
 test_ratio = 0.1 #テストデータに使う割合
 validation_ratio = 0.1 #バリデーションに使う割合
+if test_ratio + validation_ratio > 1:
+    raise Exception('すまんがデータ使う割合は足して1以下になるようにしてくれ')
 
 use_gpu = False
 
@@ -94,21 +96,20 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
     if in_data is None or in_data is None or test == True:
         in_data = []
         data = []
+        raw_data = []
         f = open('../data/nikkei5min.csv','r')
         csvfile = csv.reader(f, delimiter=',')
         for row in csvfile:
             if row[deviation] == '':
                 continue
-            data.append([row[i] for i in [end, deviation]])
+            raw_data.append([row[i] for i in [end, deviation]])
 
-        test_cut_point = int(len(data) * test_ratio)
-        validation_cut_point = int(len(data) * (test_ratio + validation_ratio))
-        print("BBBBBBBBB validation data generated")
+        test_cut_point = int(len(raw_data) * test_ratio)
+        validation_cut_point = int(len(raw_data) * (test_ratio + validation_ratio))
 
-        data = np.asarray(data[-validation_cut_point: -test_cut_point], dtype=np.float32)
+        data = np.asarray(raw_data[-validation_cut_point: -test_cut_point], dtype=np.float32)
         if test == True:
-            data = np.asarray(data[-test_cut_point:] , dtype=np.float32)
-            print("AAAAAAAAAAAAAATEST DATA GENERATED")
+            data = np.asarray(raw_data[-test_cut_point:] , dtype=np.float32)
         end_prices = data[:, 0]
         in_data = data[:, 1:2]
 
@@ -156,7 +157,7 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
                 state = 'neutral'
 
         else:
-            raise('positionに変な値入ってるエラー')
+            raise Exception('positionに変な値入ってるエラー')
         history.append((stock, money))
 
     if stock != 0:
@@ -178,6 +179,6 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
 
 if __name__ == '__main__':
     #魔法の数字
-    parameters = [0.37582741900938954, 0.30106857718840624, 826, 89]
+    parameters = [0.9374085655383125, 0.5201219290259367, 258, 176]
     simulateP(parameters, False, True)
     simulateP(parameters, True, True)
