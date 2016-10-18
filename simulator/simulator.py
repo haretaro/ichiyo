@@ -12,19 +12,23 @@ from net import Net
 
 use_gpu = False
 
-buy_value = 0.1
-sell_value = 0.9
+buy_value = 0.002
+sell_value = 0.998
 
-loss_cut = 200 #損切り
-profit_taking = 100 #利食い
+state = 'neutral' #neutral, buying, sellingのどれか
+
+loss_cut = 0.1 #損切り
+profit_taking = 0.5 #利食い
 deposit = 9e5 #証拠金
 commission = 250 #手数料
 buy_rate = 0.2 #一回の取引に使う金額の割合
 init_money = 2e7 #所持金
+global unit
+unit = 1000 #取引単位
 stock = 0 #所持枚数
 last_transit = 0
 money = init_money #所持金
-offset = 400 #予測が安定するまで取引を行わない
+offset = 100 #予測が安定するまで取引を行わない
 position = 'neutral' #sell, buy, neutral のどれかの状態を取る
 
 end = 5 #終値の列
@@ -68,11 +72,10 @@ def buy(money, stock, current_price, last_transit, buy_rate = buy_rate, deposit 
     if number_of_stock < 0:
         number_of_stock = 0
     stock += number_of_stock
-    money -= number_of_stock * current_price
     if number_of_stock != 0:
         money -= commission
         last_transit = current_price
-        print('buy {},\tprice {},\tstock {},\tmoney {}, {}'.format(number_of_stock, current_price, stock,  money, position))
+        #print('buy {},\tprice {},\tstock {},\tmoney {}, {}'.format(number_of_stock, current_price, stock,  money, position))
     return money, stock, last_transit
 
 def sell(money, stock, current_price, last_transit, buy_rate = buy_rate, deposit = deposit, commission = commission):
@@ -80,45 +83,59 @@ def sell(money, stock, current_price, last_transit, buy_rate = buy_rate, deposit
     if number_of_stock < 0:
         number_of_stock = 0
     stock -= number_of_stock
-    money += number_of_stock * current_price
     if number_of_stock != 0:
         money -= commission
         last_transit = current_price
-        print('sell {},\tprice {},\tstock {},\tmoney {}, {}'.format(number_of_stock, current_price, stock,  money, position))
+        #print('sell {},\tprice {},\tstock {},\tmoney {}, {}'.format(number_of_stock, current_price, stock,  money, position))
     return money, stock, last_transit
+
+#精算
+def payoff(money, stock, current_price, last_transit, buy_rate = buy_rate, deposit = deposit, commission = commission):
+    benefit = (current_price - last_transit) * stock * unit
+    print('stock {}, current{}, last{}, benefit {}'.format(stock, current_price, last_transit, benefit))
+    money += benefit
+    money -= commission
+    stock = 0
+    return money, stock
+
 
 #シミュレーション
 history = []
 for current_price, ceiling_degree in zip(end_prices, output[offset:,0]):
     if position == 'neutral':
-        if ceiling_degree < buy_value:
-            money, stock, last_transit = buy(money, stock, current_price, last_transit)
-            position = 'buy'
-
-        elif ceiling_degree > sell_value:
-            money, stock, last_transit = sell(money, stock, current_price, last_transit)
-            position = 'sell'
+        if state == 'neutral':
+            if ceiling_degree < buy_value:
+                state = 'buying'
+            elif ceiling_degree > sell_value:
+                state = 'selling'
+        elif state == 'buying':
+            if ceiling_degree > buy_value:
+                money, stock, last_transit = buy(money, stock, current_price, last_transit)
+                if stock > 0:
+                    position = 'buy'
+        elif state == 'selling':
+            if ceiling_degree < sell_value:
+                money, stock, last_transit = sell(money, stock, current_price, last_transit)
+                if stock < 0:
+                    position = 'sell'
 
     elif position == 'buy':
         if current_price > last_transit + profit_taking or current_price < last_transit - loss_cut:
-            money, stock, last_transit = sell(money, stock, current_price, last_transit)
+            money, stock = payoff(money, stock, current_price, last_transit)
             position = 'neutral'
+            state = 'neutral'
 
     elif position == 'sell':
         if current_price < last_transit - profit_taking or current_price > last_transit + loss_cut:
-            money, stock, last_transit = buy(money, stock, current_price, last_transit)
+            money, stock = payoff(money, stock, current_price, last_transit)
             position = 'neutral'
+            state = 'neutral'
 
     else:
         raise('positionに変な値入ってるエラー')
     history.append((stock, money))
 
-#精算
-if stock != 0:
-    money += current_price * stock
-    stock = 0
-    history.append((stock, money))
-    print('finaly, \tstock {0},\tmoney {1}, profit {2:,d} yen'.format(stock,  money, int(money - init_money)))
+print('finaly, \tstock {0},\tmoney {1}, profit {2:,d} yen'.format(stock,  money, int(money - init_money)))
 
 fig, ax1 = plt.subplots()
 ax1.plot(end_prices[offset:], label='end_price')
