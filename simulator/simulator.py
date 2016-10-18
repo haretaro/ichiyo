@@ -10,6 +10,9 @@ import sys
 sys.path.append('../net')
 from net import Net
 
+test_ratio = 0.1 #テストデータに使う割合
+validation_ratio = 0.1 #バリデーションに使う割合
+
 use_gpu = False
 
 def buy(money, stock, current_price, last_transit, buy_rate, deposit, commission, show):
@@ -62,7 +65,7 @@ output = None
 def simulateP(parameters, test=False, show=False):
     return simulate(parameters[0], parameters[1], parameters[2], parameters[3], test, show)
 #シミュレーション
-def simulate(buy_value, sell_value, loss_cut, profit_taking, test=True, show=True):
+def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=False):
     global in_data
     global data
     global output
@@ -98,9 +101,14 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=True, show=Tru
                 continue
             data.append([row[i] for i in [end, deviation]])
 
-        data = np.asarray(data[-int(len(data) * 0.2): -int(len(data) * 0.1)], dtype=np.float32)
+        test_cut_point = int(len(data) * test_ratio)
+        validation_cut_point = int(len(data) * (test_ratio + validation_ratio))
+        print("BBBBBBBBB validation data generated")
+
+        data = np.asarray(data[-validation_cut_point: -test_cut_point], dtype=np.float32)
         if test == True:
-            data = np.asarray(data[-int(len(data) * 0.1):] , dtype=np.float32)
+            data = np.asarray(data[-test_cut_point:] , dtype=np.float32)
+            print("AAAAAAAAAAAAAATEST DATA GENERATED")
         end_prices = data[:, 0]
         in_data = data[:, 1:2]
 
@@ -171,4 +179,5 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=True, show=Tru
 if __name__ == '__main__':
     #魔法の数字
     parameters = [0.37582741900938954, 0.30106857718840624, 826, 89]
+    simulateP(parameters, False, True)
     simulateP(parameters, True, True)
