@@ -53,7 +53,20 @@ def evaluate(model, x):
     out = evaluator.predict(x)
     return chainer.cuda.to_cpu(out.data)
 
+in_data = None
+data = None
+output = None
+
+#引数がパラメータのリストになったシミュレーション
+#パラメータは買い閾値, 売り閾値, 損切り, 利食いのリスト
+def simulateP(parameters, test=False, show=False):
+    return simulate(parameters[0], parameters[1], parameters[2], parameters[3], test, show)
+#シミュレーション
 def simulate(buy_value, sell_value, loss_cut, profit_taking, test=True, show=True):
+    global in_data
+    global data
+    global output
+    global end_prices
 
     deposit = 9e5 #証拠金
     commission = 250 #手数料
@@ -75,30 +88,31 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=True, show=Tru
     xp = np
 
 #データ読み込み
-    in_data = []
-    data = []
-    f = open('../data/nikkei5min.csv','r')
-    csvfile = csv.reader(f, delimiter=',')
-    for row in csvfile:
-        if row[deviation] == '':
-            continue
-        data.append([row[i] for i in [end, deviation]])
+    if in_data is None or in_data is None or test == True:
+        in_data = []
+        data = []
+        f = open('../data/nikkei5min.csv','r')
+        csvfile = csv.reader(f, delimiter=',')
+        for row in csvfile:
+            if row[deviation] == '':
+                continue
+            data.append([row[i] for i in [end, deviation]])
 
-    data = np.asarray(data[-int(len(data) * 0.2): -int(len(data) * 0.1)], dtype=np.float32)
-    if test == True:
-        data = np.asarray(data[-int(len(data) * 0.1):] , dtype=np.float32)
-    end_prices = data[:, 0]
-    in_data = data[:, 1:2]
+        data = np.asarray(data[-int(len(data) * 0.2): -int(len(data) * 0.1)], dtype=np.float32)
+        if test == True:
+            data = np.asarray(data[-int(len(data) * 0.1):] , dtype=np.float32)
+        end_prices = data[:, 0]
+        in_data = data[:, 1:2]
 
-    in_data = xp.asarray(in_data, dtype=np.float32)
+        in_data = xp.asarray(in_data, dtype=np.float32)
 
 #モデルを読み込む
-    model = Net(1,20,1)
-    serializers.load_npz('ceiling_degree.model', model)
+        model = Net(1,20,1)
+        serializers.load_npz('ceiling_degree.model', model)
 
-    output = evaluate(model, in_data)
-    in_data = in_data
-    output = output
+        output = evaluate(model, in_data)
+        in_data = in_data
+        output = output
 
 
 #シミュレーション
@@ -156,8 +170,5 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=True, show=Tru
 
 if __name__ == '__main__':
     #魔法の数字
-    buy_value = 0.1
-    sell_value = 0.1
-    loss_cut = 372 #損切り
-    profit_taking = 503 #利食い
-    simulate(buy_value, sell_value, loss_cut, profit_taking)
+    parameters = [0.37582741900938954, 0.30106857718840624, 826, 89]
+    simulateP(parameters, True, True)
