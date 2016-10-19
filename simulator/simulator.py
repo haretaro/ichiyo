@@ -7,6 +7,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+import math
 sys.path.append('../net')
 from net import Net
 
@@ -64,10 +65,10 @@ output = None
 
 #引数がパラメータのリストになったシミュレーション
 #パラメータは買い閾値, 売り閾値, 損切り, 利食いのリスト
-def simulateP(parameters, test=False, show=False):
-    return simulate(parameters[0], parameters[1], parameters[2], parameters[3], test, show)
+def simulateP(parameters, test=False, show=False, regularization=None):
+    return simulate(parameters[0], parameters[1], parameters[2], parameters[3], test, show, regularization)
 #シミュレーション
-def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=False):
+def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=False, regularization=None):
     global in_data
     global data
     global output
@@ -174,6 +175,13 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
         ax2.plot([x[1] for x in history], label='money', color='green')
         plt.grid()
         plt.show()
+
+    #大きすぎる利益に鈍感にする正則化
+    if regularization == 'log':
+        money_history = [init_money] + [h[1] for h in history]
+        benefits = [a[0] - a[1] for a in zip(money_history[1:], money_history[:-1])]
+        regularized = [math.log(a+1) if a >= 0 else -math.log(abs(a) +1) for a in benefits]
+        return sum(regularized)
     return money - init_money
 
 
@@ -181,4 +189,4 @@ if __name__ == '__main__':
     #魔法の数字
     parameters = [0.9374085655383125, 0.5201219290259367, 258, 176]
     simulateP(parameters, False, True)
-    simulateP(parameters, True, True)
+    simulateP(parameters, True, True, 'log')
