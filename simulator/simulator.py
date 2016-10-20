@@ -89,21 +89,21 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
 
     end = 5 #終値の列
     deviation = 7 #移動平均乖離率
+    twitter = 10 #その日のツイート数
 
     xp = cuda.cupy if use_gpu is True else np
-    xp = np
 
 #データ読み込み
     if in_data is None or in_data is None or test == True:
         in_data = []
         data = []
         raw_data = []
-        f = open('../data/nikkei5min.csv','r')
+        f = open('../data/result_nikkei5min.csv','r')
         csvfile = csv.reader(f, delimiter=',')
         for row in csvfile:
             if row[deviation] == '':
                 continue
-            raw_data.append([row[i] for i in [end, deviation]])
+            raw_data.append([row[i] for i in [end, deviation, twitter]])
 
         test_cut_point = int(len(raw_data) * test_ratio)
         validation_cut_point = int(len(raw_data) * (test_ratio + validation_ratio))
@@ -112,13 +112,13 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
         if test == True:
             data = np.asarray(raw_data[-test_cut_point:] , dtype=np.float32)
         end_prices = data[:, 0]
-        in_data = data[:, 1:2]
+        in_data = data[:, 1:3]
 
         in_data = xp.asarray(in_data, dtype=np.float32)
 
 #モデルを読み込む
-        model = Net(1,20,1)
-        serializers.load_npz('ceiling_degree.model', model)
+        model = Net(2,20,1)
+        serializers.load_npz('../models/5min_3M_epoch.model', model)
 
         output = evaluate(model, in_data)
         in_data = in_data
@@ -176,13 +176,15 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
         plt.grid()
         plt.show()
 
+    money_history = [init_money] + [h[1] for h in history]
     #大きすぎる利益に鈍感にする正則化
     if regularization == 'log':
-        money_history = [init_money] + [h[1] for h in history]
         benefits = [a[0] - a[1] for a in zip(money_history[1:], money_history[:-1])]
         regularized = [math.log(a+1) if a >= 0 else -math.log(abs(a) +1) for a in benefits]
         return sum(regularized)
-    return money - init_money
+    
+    s = [x + 100 if x != 0 else x for x in money_history]
+    return sum(s)
 
 
 if __name__ == '__main__':
