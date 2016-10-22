@@ -183,7 +183,7 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
         regularized = [math.log(a+1) if a >= 0 else -math.log(abs(a) +1) for a in benefits]
         return sum(regularized)
     
-    s = [x + 100 if x != 0 else x for x in money_history]
+    s = [x + 300 if x != 0 else x for x in money_history]
     return sum(s)
 
 
