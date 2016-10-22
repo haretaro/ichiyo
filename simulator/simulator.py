@@ -189,6 +189,6 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
 
 if __name__ == '__main__':
     #魔法の数字
-    parameters = [0.9374085655383125, 0.5201219290259367, 258, 176]
+    parameters = [0.9374085655383125, 0.5201219290259367, 258, 176] #買い、売り、損切り、利食い
     simulateP(parameters, False, True)
-    simulateP(parameters, True, True, 'log')
+    simulateP(parameters, True, True)
