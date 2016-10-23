@@ -6,10 +6,13 @@ from chainer import serializers, cuda
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import matplotlib.ticker as ticker
 import sys
 import math
 sys.path.append('../net')
 from net import Net
+from datetime import datetime
 
 test_ratio = 0.1 #テストデータに使う割合
 validation_ratio = 0.1 #バリデーションに使う割合
@@ -90,27 +93,36 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
     end = 5 #終値の列
     deviation = 7 #移動平均乖離率
     twitter = 10 #その日のツイート数
+    date = 0
+    time = 1
 
     xp = cuda.cupy if use_gpu is True else np
 
 #データ読み込み
-    if in_data is None or in_data is None or test == True:
+    if in_data is None or test == True:
         in_data = []
         data = []
         raw_data = []
+        dates = []
+        dates_temp = []
         f = open('../data/result_nikkei5min.csv','r')
         csvfile = csv.reader(f, delimiter=',')
         for row in csvfile:
             if row[deviation] == '':
                 continue
             raw_data.append([row[i] for i in [end, deviation, twitter]])
+            dates_temp.append(datetime.strptime(row[date] + ' ' + row[time], '%Y/%m/%d %H:%M:%S'))
 
         test_cut_point = int(len(raw_data) * test_ratio)
         validation_cut_point = int(len(raw_data) * (test_ratio + validation_ratio))
 
         data = np.asarray(raw_data[-validation_cut_point: -test_cut_point], dtype=np.float32)
+        dates = dates_temp[-validation_cut_point: -test_cut_point]
+
         if test == True:
             data = np.asarray(raw_data[-test_cut_point:] , dtype=np.float32)
+            dates = dates_temp[-test_cut_point:]
+
         end_prices = data[:, 0]
         in_data = data[:, 1:3]
 
@@ -165,14 +177,23 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
         money, stock = payoff(money, stock, current_price, last_transit, buy_rate, deposit, commission, show)
         history.append((stock, money))
 
+    def format_date(x, pos=None):
+        N = len(dates)
+        thisind = np.clip(int(x+0.5), 0, N-1)
+        return dates[thisind].strftime('%Y/%m/%d')
+
     if show:
         print('finaly, \tstock {0},\tmoney {1}, profit {2:,d} yen'.format(stock,  money, int(money - init_money)))
 
+        ind = np.arange(len(end_prices))
         fig, ax1 = plt.subplots()
-        ax1.plot(end_prices[offset:], label='end_price')
+        ax1.plot(ind[offset:], end_prices[offset:], label='end_price')
+        #ax1.plot(end_prices[offset:], label='end_price')
+        ax1.xaxis.set_major_formatter(ticker.FuncFormatter(format_date))
         plt.legend()
         ax2 = ax1.twinx()
         ax2.plot([x[1] for x in history], label='money', color='green')
+        #ax2.plot([x[1] for x in history], label='money', color='green')
         plt.grid()
         plt.show()
 
@@ -182,13 +203,12 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
         benefits = [a[0] - a[1] for a in zip(money_history[1:], money_history[:-1])]
         regularized = [math.log(a+1) if a >= 0 else -math.log(abs(a) +1) for a in benefits]
         return sum(regularized)
-    
+
     s = [x + 300 if x != 0 else x for x in money_history]
     return sum(s)
 
-
 if __name__ == '__main__':
     #魔法の数字
-    parameters = [0.9374085655383125, 0.5201219290259367, 258, 176] #買い、売り、損切り、利食い
+    parameters = [0.4, 0.5, 100, 100] #買い、売り、損切り、利食い
     simulateP(parameters, False, True)
     simulateP(parameters, True, True)
