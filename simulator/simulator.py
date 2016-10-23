@@ -27,7 +27,7 @@ def buy(money, stock, current_price, last_transit, buy_rate, deposit, commission
         number_of_stock = 0
     stock += number_of_stock
     if number_of_stock != 0:
-        money -= commission
+        money -= commission * number_of_stock
         last_transit = current_price
         if show:
             print('buy {},\tprice {}'.format(number_of_stock, current_price))
@@ -39,7 +39,7 @@ def sell(money, stock, current_price, last_transit, buy_rate, deposit, commissio
         number_of_stock = 0
     stock -= number_of_stock
     if number_of_stock != 0:
-        money -= commission
+        money -= commission * number_of_stock
         last_transit = current_price
         if show:
             print('sell {},\tprice {}'.format(number_of_stock, current_price))
@@ -51,7 +51,7 @@ def payoff(money, stock, current_price, last_transit, buy_rate, deposit, commiss
     if show:
         print('stock {}, current{}, last{}, benefit {}'.format(stock, current_price, last_transit, benefit))
     money += benefit
-    money -= commission
+    money -= commission * stock
     stock = 0
     return money, stock
 
@@ -78,7 +78,7 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
     global end_prices
 
     deposit = 9e5 #証拠金
-    commission = 280 #手数料
+    commission = 280 #手数料 / 枚
     buy_rate = 0.2 #一回の取引に使う金額の割合
     init_money = 2e7 #所持金
     global unit
