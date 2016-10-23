@@ -65,6 +65,7 @@ def evaluate(model, x):
 in_data = None
 data = None
 output = None
+dates = None
 
 #引数がパラメータのリストになったシミュレーション
 #パラメータは買い閾値, 売り閾値, 損切り, 利食いのリスト
@@ -74,6 +75,7 @@ def simulateP(parameters, test=False, show=False, regularization=None):
 def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=False, regularization=None):
     global in_data
     global data
+    global dates
     global output
     global end_prices
 
