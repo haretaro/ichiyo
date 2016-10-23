@@ -78,7 +78,7 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
     global end_prices
 
     deposit = 9e5 #証拠金
-    commission = 250 #手数料
+    commission = 280 #手数料
     buy_rate = 0.2 #一回の取引に使う金額の割合
     init_money = 2e7 #所持金
     global unit
