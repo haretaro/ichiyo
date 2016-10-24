@@ -45,7 +45,7 @@ def buy(money, stock, current_price, last_transit, buy_rate, deposit, commission
         number_of_stock = 0
     stock += number_of_stock
     if number_of_stock != 0:
-        money -= commission * number_of_stock
+        #money -= commission * number_of_stock
         last_transit = current_price
         if show:
             print('buy {},\tprice {}'.format(number_of_stock, current_price))
@@ -57,7 +57,7 @@ def sell(money, stock, current_price, last_transit, buy_rate, deposit, commissio
         number_of_stock = 0
     stock -= number_of_stock
     if number_of_stock != 0:
-        money -= commission * number_of_stock
+        #money -= commission * number_of_stock
         last_transit = current_price
         if show:
             print('sell {},\tprice {}'.format(number_of_stock, current_price))
@@ -192,18 +192,6 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
     if show:
         print('finaly, \tstock {0},\tmoney {1}, profit {2:,d} yen'.format(stock,  money, int(money - init_money)))
 
-        ind = np.arange(len(end_prices))
-        fig, ax1 = plt.subplots()
-        ax1.plot(ind[offset:], end_prices[offset:], label='end_price')
-        #ax1.plot(end_prices[offset:], label='end_price')
-        ax1.xaxis.set_major_formatter(ticker.FuncFormatter(format_date))
-        plt.legend()
-        ax2 = ax1.twinx()
-        ax2.plot([x[1] for x in history], label='money', color='green')
-        #ax2.plot([x[1] for x in history], label='money', color='green')
-        plt.grid()
-        plt.show()
-
     money_history = [init_money] + [h[1] for h in history]
     benefits = [a[0] - a[1] for a in zip(money_history[1:], money_history[:-1])]
 
@@ -214,10 +202,28 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
         return sum(regularized)
 
     s = [x + score_for_transaction if x != 0 else x for x in benefits]
+    if show:
+        number_of_transaction = sum(1 if x!=0 else 0 for x in benefits)
+        number_of_win = sum(1 if x>1 else 0 for x in benefits)
+        number_of_lose = sum(1 if x<0 else 0 for x in benefits)
+
+        print(len(benefits))
+        print('取引回数: {}'.format(number_of_transaction))
+        print('勝率: {}'.format(number_of_win / number_of_transaction))
+
+        ind = np.arange(len(end_prices))
+        fig, ax1 = plt.subplots()
+        ax1.plot(ind[offset:], end_prices[offset:], label='end_price')
+        ax1.xaxis.set_major_formatter(ticker.FuncFormatter(format_date))
+        plt.legend()
+        ax2 = ax1.twinx()
+        ax2.plot([x[1] for x in history], label='money', color='green')
+        plt.grid()
+        plt.show()
     return sum(s)
 
 if __name__ == '__main__':
     #魔法の数字
-    parameters = [0.3, 0.8, 200, 100] #買い、売り、損切り、利食い
+    parameters = [0.4, 0.7, 30, 10] #底判定値、天井判定値、損切り、利食い
     simulateP(parameters, False, True)
     simulateP(parameters, True, True)
