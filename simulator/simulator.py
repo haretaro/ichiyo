@@ -23,7 +23,7 @@ use_gpu = False
 xp = cuda.cupy if use_gpu is True else np
 
 deposit = 9e5 #証拠金
-commission = 280 #手数料/枚
+commission = 280 * 1.08 #手数料/枚 + 税
 buy_rate = 0.2 #一回の取引に使う金額の割合
 init_money = 2e7 #所持金
 unit = 1000 #取引単位
