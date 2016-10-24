@@ -6,17 +6,18 @@ import matplotlib.pyplot as plt
 iteration = 10000
 best_parameters = []
 best_benefit = 0
-alpha = 0.9
+alpha = 0.999 #イテレーション毎の温度降下の割合
 tempreture = alpha
-regularization = None
-mobility_of_rate = 0.1
-mobility_of_money = 100
-scale_par_100iteration = 0.9
+regularization = None #'log' に設定すると利益の対数をスコアに用いる
+mobility_of_rate = 0.2 #買い閾値, 売り閾値の移動度
+mobility_of_money = 20 #利食い, 損切り額の移動度
+scale_par_100iteration = 0.9 #100イテレーション毎にこの倍率で移動度を下げる
+score_for_transaction = 0 #一回の取引に与える報酬
 
-buy_value = uniform(0.5,1)
-sell_value = uniform(0,0.5)
-loss_cut = randint(0,1000)
-profit_taking = randint(0,1000)
+buy_value = uniform(0,0.5)
+sell_value = uniform(0.5,1)
+loss_cut = randint(0,100)
+profit_taking = randint(0,100)
 state = [buy_value, sell_value, loss_cut, profit_taking]
 def probability(next_score, score, tempreture):
     if next_score >= score:
@@ -36,14 +37,12 @@ def neighbour(state):
         s0 = 1
     if s1 > 1:
         s1 = 1
-    if s0 < s1:
-        s0, s1 = s1, s0
     next_state = [s0, s1, s2, s3]
     next_state = [s if s > 0 else 0 for s in next_state]
     return next_state
 
 history = []
-score = simulateP(state)
+score = simulateP(state, regularization=regularization, score_for_transaction=score_for_transaction)
 
 try:
     for i in range(iteration):
@@ -51,15 +50,15 @@ try:
             print('iteration {} / {}, T={}, current score{}'.format(i, iteration, tempreture, score))
             mobility_of_rate *= scale_par_100iteration
             mobility_of_money = int( mobility_of_money * scale_par_100iteration)
-        current_score = simulate(state[0], state[1], state[2], state[3], False, False, regularization)
+        current_score = simulate(state[0], state[1], state[2], state[3], False, False, regularization, score_for_transaction)
         next_state = neighbour(state)
-        next_score = simulateP(next_state, regularization=regularization)
+        next_score = simulateP(next_state, regularization=regularization, score_for_transaction = score_for_transaction)
         if random() < probability(next_score, score, tempreture):
             state = next_state
             score = next_score
             print('iteration{}: new parameter {}, benefit {}'.format(i, state, score))
-            history.append(score)
         tempreture *= alpha
+        history.append(score)
 except KeyboardInterrupt:
     print('stopped')
     print('iteration{}: iterationparameter {}, benefit {}'.format(i, state, score))

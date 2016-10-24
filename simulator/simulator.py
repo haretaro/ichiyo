@@ -14,15 +14,33 @@ sys.path.append('../net')
 from net import Net
 from datetime import datetime
 
-test_ratio = 0.1 #テストデータに使う割合
 validation_ratio = 0.1 #バリデーションに使う割合
+test_ratio = 0.1 #テストデータに使う割合
 if test_ratio + validation_ratio > 1:
     raise Exception('すまんがデータ使う割合は足して1以下になるようにしてくれ')
 
 use_gpu = False
+xp = cuda.cupy if use_gpu is True else np
+
+deposit = 9e5 #証拠金
+commission = 280 #手数料/枚
+buy_rate = 0.2 #一回の取引に使う金額の割合
+init_money = 2e7 #所持金
+unit = 1000 #取引単位
+offset = 0 #予測が安定するまで取引を行わない
+
+csv_file_name = '../data/result_nikkei5min.csv'
+model_file_name = '../models/5min_3M_epoch.model'
+
+end = 5 #終値の列
+deviation = 7 #移動平均乖離率
+twitter = 10 #その日のツイート数
+date = 0
+time = 1
+
 
 def buy(money, stock, current_price, last_transit, buy_rate, deposit, commission, show):
-    number_of_stock = min(money * buy_rate // current_price, money // deposit) - stock
+    number_of_stock = money * buy_rate // deposit - stock
     if number_of_stock < 0:
         number_of_stock = 0
     stock += number_of_stock
@@ -34,7 +52,7 @@ def buy(money, stock, current_price, last_transit, buy_rate, deposit, commission
     return money, stock, last_transit
 
 def sell(money, stock, current_price, last_transit, buy_rate, deposit, commission, show):
-    number_of_stock = min(money * buy_rate // current_price, money // deposit) + stock
+    number_of_stock = money * buy_rate // deposit + stock
     if number_of_stock < 0:
         number_of_stock = 0
     stock -= number_of_stock
@@ -67,38 +85,25 @@ data = None
 output = None
 dates = None
 
+score_for_transaction = 0
+
 #引数がパラメータのリストになったシミュレーション
 #パラメータは買い閾値, 売り閾値, 損切り, 利食いのリスト
-def simulateP(parameters, test=False, show=False, regularization=None):
-    return simulate(parameters[0], parameters[1], parameters[2], parameters[3], test, show, regularization)
+def simulateP(parameters, test=False, show=False, regularization=None, score_for_transaction=score_for_transaction):
+    return simulate(parameters[0], parameters[1], parameters[2], parameters[3], test, show, regularization, score_for_transaction=score_for_transaction)
 #シミュレーション
-def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=False, regularization=None):
+def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=False, regularization=None, score_for_transaction=score_for_transaction):
     global in_data
     global data
     global dates
     global output
     global end_prices
 
-    deposit = 9e5 #証拠金
-    commission = 280 #手数料 / 枚
-    buy_rate = 0.2 #一回の取引に使う金額の割合
-    init_money = 2e7 #所持金
-    global unit
-    unit = 1000 #取引単位
+    money = init_money
     stock = 0 #所持枚数
     last_transit = 0
-    money = init_money #所持金
-    offset = 100 #予測が安定するまで取引を行わない
     position = 'neutral' #sell, buy, neutral のどれかの状態を取る
     state = 'neutral' #neutral, buying, sellingのどれか
-
-    end = 5 #終値の列
-    deviation = 7 #移動平均乖離率
-    twitter = 10 #その日のツイート数
-    date = 0
-    time = 1
-
-    xp = cuda.cupy if use_gpu is True else np
 
 #データ読み込み
     if in_data is None or test == True:
@@ -107,7 +112,7 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
         raw_data = []
         dates = []
         dates_temp = []
-        f = open('../data/result_nikkei5min.csv','r')
+        f = open(csv_file_name,'r')
         csvfile = csv.reader(f, delimiter=',')
         for row in csvfile:
             if row[deviation] == '':
@@ -132,7 +137,7 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
 
 #モデルを読み込む
         model = Net(2,20,1)
-        serializers.load_npz('../models/5min_3M_epoch.model', model)
+        serializers.load_npz(model_file_name, model)
 
         output = evaluate(model, in_data)
         in_data = in_data
@@ -200,17 +205,19 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
         plt.show()
 
     money_history = [init_money] + [h[1] for h in history]
-    #大きすぎる利益に鈍感にする正則化
+    benefits = [a[0] - a[1] for a in zip(money_history[1:], money_history[:-1])]
+
     if regularization == 'log':
-        benefits = [a[0] - a[1] for a in zip(money_history[1:], money_history[:-1])]
+    #利益の対数を報酬にして大きな利益に鈍感にする
+        benefits = [x + score_for_transaction if x != 0 else x for x in benefits]
         regularized = [math.log(a+1) if a >= 0 else -math.log(abs(a) +1) for a in benefits]
         return sum(regularized)
 
-    s = [x + 300 if x != 0 else x for x in money_history]
+    s = [x + score_for_transaction if x != 0 else x for x in benefits]
     return sum(s)
 
 if __name__ == '__main__':
     #魔法の数字
-    parameters = [0.4, 0.5, 100, 100] #買い、売り、損切り、利食い
+    parameters = [0.3, 0.8, 200, 100] #買い、売り、損切り、利食い
     simulateP(parameters, False, True)
     simulateP(parameters, True, True)
