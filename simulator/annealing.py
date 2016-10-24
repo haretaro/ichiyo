@@ -10,7 +10,7 @@ alpha = 0.999 #イテレーション毎の温度降下の割合
 tempreture = alpha
 regularization = None #'log' に設定すると利益の対数をスコアに用いる
 mobility_of_rate = 0.2 #買い閾値, 売り閾値の移動度
-mobility_of_money = 20 #利食い, 損切り額の移動度
+mobility_of_money = 5 #利食い, 損切り額の移動度
 scale_par_100iteration = 0.9 #100イテレーション毎にこの倍率で移動度を下げる
 score_for_transaction = 0 #一回の取引に与える報酬
 
