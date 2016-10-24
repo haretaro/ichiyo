@@ -29,7 +29,7 @@ init_money = 2e7 #所持金
 unit = 1000 #取引単位
 offset = 0 #予測が安定するまで取引を行わない
 
-csv_file_name = '../data/result_nikkei5min.csv'
+csv_file_name = '../data/result_nikkei30min.csv'
 model_file_name = '../models/5min_3M_epoch.model'
 
 end = 5 #終値の列
