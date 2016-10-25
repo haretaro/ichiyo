@@ -9,6 +9,8 @@ from net import Net
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+from datetime import datetime
 
 csv_file = '../data/result_nikkei5min.csv'
 model_file = '../models/5min_3M_epoch.model'
@@ -28,6 +30,7 @@ with open(csv_file,'r') as f:
         raw_data.append([row[i] for i in range(11)]) #10列目まで読み込む
 
     end_prices = [[x[end]] for x in raw_data]
+    dates = [datetime.strptime(x[0] + ' ' + row[1], '%Y/%m/%d %H:%M:%S') for x in raw_data]
     in_data = [[x[deviation], x[twitter]] for x in raw_data]
     in_data = xp.asarray(in_data, dtype=np.float32)
 
@@ -37,6 +40,11 @@ def evaluate(model, x):
     out = evaluator.predict(x)
     return chainer.cuda.to_cpu(out.data)
 
+def format_date(x, pos=None):
+    N = len(dates)
+    thisind = np.clip(int(x+0.5), 0, N-1)
+    return dates[thisind].strftime('%Y/%m/%d')
+
 #モデルを読み込む
 model = Net(2,20,1)
 serializers.load_npz(model_file, model)
@@ -45,6 +53,7 @@ output = evaluate(model, in_data)
 
 fig, ax1 = plt.subplots()
 ax1.plot([x[end] for x in raw_data])
+ax1.xaxis.set_major_formatter(ticker.FuncFormatter(format_date))
 ax2 = ax1.twinx()
 ax2.plot(output, color='green')
 plt.show()
