@@ -14,8 +14,8 @@ sys.path.append('../net')
 from net import Net
 from datetime import datetime
 
-validation_ratio = 0.1 #バリデーションに使う割合
-test_ratio = 0.1 #テストデータに使う割合
+validation_ratio = 0.8 #バリデーションに使う割合
+test_ratio = 0.2 #テストデータに使う割合
 if test_ratio + validation_ratio > 1:
     raise Exception('すまんがデータ使う割合は足して1以下になるようにしてくれ')
 
@@ -215,9 +215,11 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
         fig, ax1 = plt.subplots()
         ax1.plot(ind[offset:], end_prices[offset:], label='end_price')
         ax1.xaxis.set_major_formatter(ticker.FuncFormatter(format_date))
-        plt.legend()
+        ax1.set_ylabel('日経平均株価')
+        #plt.legend()
         ax2 = ax1.twinx()
         ax2.plot([x[1] for x in history], label='money', color='green')
+        ax2.set_ylabel('所持金')
         plt.grid()
         plt.show()
     return sum(s)
@@ -225,5 +227,7 @@ def simulate(buy_value, sell_value, loss_cut, profit_taking, test=False, show=Fa
 if __name__ == '__main__':
     #魔法の数字
     parameters = [0.4, 0.7, 30, 10] #底判定値、天井判定値、損切り、利食い
+    parameters = [0.563349954, 0.7121350237, 44, 72]
+    
     simulateP(parameters, False, True)
     simulateP(parameters, True, True)
